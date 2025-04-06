@@ -1,25 +1,27 @@
 package user
 
-import	 (
-	"fmt"
+import (
 	"bytes"
-	"net/http/httptest"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"github.com/gorilla/mux"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 	"github.com/ndraoo/restapi-go/types"
 )
+
 func TestUserServiceHandlers(t *testing.T) {
-	userStore := &mockUserStore{}	
+	userStore := &mockUserStore{}
 	handler := NewHandler(userStore)
 
-	t.Run("should fail if the user payload is valid", func(t *testing.T) {
-		payload :=  types.RegisterUserPay{ 
+	t.Run("gagal jika payload tidak valid", func(t *testing.T) {
+		payload := types.RegisterUserPay{
 			FirstName: "John",
 			LastName:  "Doe",
-			Email:    "sasd" ,
-			Password: "password",
+			Email:     "invalid",
+			Password:  "password",
 		}
 
 		marshalled, err := json.Marshal(payload)
@@ -27,8 +29,8 @@ func TestUserServiceHandlers(t *testing.T) {
 			t.Fatalf("failed to marshal payload: %v", err)
 		}
 
-		req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(marshalled))	
-		
+		req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(marshalled))
+
 		if err != nil {
 			t.Fatalf("failed to create request: %v", err)
 		}
@@ -39,14 +41,43 @@ func TestUserServiceHandlers(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		if rr.Code != http.StatusBadRequest { 
+		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+		}
+	})
+
+	t.Run("berhasil registrasi jika payload valid", func(t *testing.T) {
+		payload := types.RegisterUserPay{
+			FirstName: "John",
+			LastName:  "Doe",
+			Email:     "valid@gmail.com",
+			Password:  "password",
+		}
+
+		marshalled, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatalf("failed to marshal payload: %v", err)
+		}
+
+		req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(marshalled))
+
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+		router.HandleFunc("/register", handler.handleRegister)
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusCreated {
+			t.Fatalf("expected status %d, got %d", http.StatusCreated, rr.Code)
 		}
 	})
 }
 
 type mockUserStore struct {
-
 }
 
 func (m *mockUserStore) GetUserByEmail(email string) (*types.User, error) {

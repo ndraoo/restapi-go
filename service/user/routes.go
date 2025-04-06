@@ -1,12 +1,14 @@
 package user
 
-import (	
-	"net/http"
-	"github.com/ndraoo/restapi-go/utils"
-	"github.com/ndraoo/restapi-go/types"
-	"github.com/gorilla/mux"
+import (
 	"fmt"
+	"net/http"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
 	"github.com/ndraoo/restapi-go/service/auth"
+	"github.com/ndraoo/restapi-go/types"
+	"github.com/ndraoo/restapi-go/utils"
 )
 
 type Handler struct {
@@ -29,8 +31,15 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	// get JSON payload from request body
 	var payload types.RegisterUserPay
-	if err := utils.ParseJSON(r, payload); err != nil {
+	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	//validation payload
+	if err := utils.Validate.Struct(payload); err != nil {
+		error := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", error))
+		return
 	}
 
 	// check if user already exists
@@ -38,7 +47,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with emails %s already exists", payload.Email))
-		return	
+		return
 	}
 
 	hashedPassword, err := auth.HashPassword(payload.Password)
