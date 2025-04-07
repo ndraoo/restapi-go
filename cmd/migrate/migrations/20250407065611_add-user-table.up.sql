@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS users (
+    `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
+    `firstName` VARCHAR(50) NOT NULL,
+    `lastName` VARCHAR(50) NOT NULL,
+    `email` VARCHAR(100) UNIQUE NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY(id), 
+    UNIQUE KEY(email)
+);

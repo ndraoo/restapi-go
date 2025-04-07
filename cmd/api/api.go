@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/ndraoo/restapi-go/service/product"
 	"github.com/ndraoo/restapi-go/service/user"
 )
 
@@ -25,6 +26,9 @@ func (s *APIserver) Run() error {
 	userStore := user.NewStore(s.db)
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subrouter)
+	productStore := product.NewStore(s.db)
+	productHandler := product.NewHandler(productStore, userStore)
+	productHandler.RegisterRoutes(subrouter)
 
 	log.Println("server is running on", s.addr)
 
